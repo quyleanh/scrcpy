@@ -21,6 +21,32 @@ enum sc_record_format {
     SC_RECORD_FORMAT_AUTO,
     SC_RECORD_FORMAT_MP4,
     SC_RECORD_FORMAT_MKV,
+    SC_RECORD_FORMAT_M4A,
+    SC_RECORD_FORMAT_MKA,
+    SC_RECORD_FORMAT_OPUS,
+    SC_RECORD_FORMAT_AAC,
+};
+
+static inline bool
+sc_record_format_is_audio_only(enum sc_record_format fmt) {
+    return fmt == SC_RECORD_FORMAT_M4A
+        || fmt == SC_RECORD_FORMAT_MKA
+        || fmt == SC_RECORD_FORMAT_OPUS
+        || fmt == SC_RECORD_FORMAT_AAC;
+}
+
+enum sc_codec {
+    SC_CODEC_H264,
+    SC_CODEC_H265,
+    SC_CODEC_AV1,
+    SC_CODEC_OPUS,
+    SC_CODEC_AAC,
+    SC_CODEC_RAW,
+};
+
+enum sc_audio_source {
+    SC_AUDIO_SOURCE_OUTPUT,
+    SC_AUDIO_SOURCE_MIC,
 };
 
 enum sc_lock_video_orientation {
@@ -87,12 +113,14 @@ struct scrcpy_options {
     const char *window_title;
     const char *push_target;
     const char *render_driver;
-    const char *codec_options;
-    const char *encoder_name;
-#ifdef HAVE_V4L2
-    const char *v4l2_device;
-#endif
+    const char *video_codec_options;
+    const char *audio_codec_options;
+    const char *video_encoder;
+    const char *audio_encoder;
     enum sc_log_level log_level;
+    enum sc_codec video_codec;
+    enum sc_codec audio_codec;
+    enum sc_audio_source audio_source;
     enum sc_record_format record_format;
     enum sc_keyboard_input_mode keyboard_input_mode;
     enum sc_mouse_input_mode mouse_input_mode;
@@ -101,7 +129,8 @@ struct scrcpy_options {
     uint16_t tunnel_port;
     struct sc_shortcut_mods shortcut_mods;
     uint16_t max_size;
-    uint32_t bit_rate;
+    uint32_t video_bit_rate;
+    uint32_t audio_bit_rate;
     uint16_t max_fps;
     enum sc_lock_video_orientation lock_video_orientation;
     uint8_t rotation;
@@ -111,7 +140,13 @@ struct scrcpy_options {
     uint16_t window_height;
     uint32_t display_id;
     sc_tick display_buffer;
+    sc_tick audio_buffer;
+    sc_tick audio_output_buffer;
+    sc_tick time_limit;
+#ifdef HAVE_V4L2
+    const char *v4l2_device;
     sc_tick v4l2_buffer;
+#endif
 #ifdef HAVE_USB
     bool otg;
 #endif
@@ -119,7 +154,8 @@ struct scrcpy_options {
     bool fullscreen;
     bool always_on_top;
     bool control;
-    bool display;
+    bool video_playback;
+    bool audio_playback;
     bool turn_screen_off;
     enum sc_key_inject_mode key_inject_mode;
     bool window_borderless;
@@ -140,6 +176,12 @@ struct scrcpy_options {
     bool cleanup;
     bool start_fps_counter;
     bool power_on;
+    bool video;
+    bool audio;
+    bool require_audio;
+    bool list_encoders;
+    bool list_displays;
+    bool kill_adb_on_close;
 };
 
 extern const struct scrcpy_options scrcpy_options_default;

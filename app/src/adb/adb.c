@@ -401,6 +401,7 @@ sc_adb_list_devices(struct sc_intr *intr, unsigned flags,
 #define BUFSIZE 65536
     char *buf = malloc(BUFSIZE);
     if (!buf) {
+        LOG_OOM();
         return false;
     }
 
@@ -627,8 +628,8 @@ sc_adb_select_device(struct sc_intr *intr,
         return false;
     }
 
-    LOGD("ADB device found:");
-    sc_adb_devices_log(SC_LOG_LEVEL_DEBUG, vec.data, vec.size);
+    LOGI("ADB device found:");
+    sc_adb_devices_log(SC_LOG_LEVEL_INFO, vec.data, vec.size);
 
     // Move devics into out_device (do not destroy device)
     sc_adb_device_move(out_device, device);
@@ -710,5 +711,5 @@ sc_adb_get_device_ip(struct sc_intr *intr, const char *serial, unsigned flags) {
     // It is parsed as a NUL-terminated string
     buf[r] = '\0';
 
-    return sc_adb_parse_device_ip_from_output(buf);
+    return sc_adb_parse_device_ip(buf);
 }

@@ -6,10 +6,10 @@ cd "$DIR"
 mkdir -p "$PREBUILT_DATA_DIR"
 cd "$PREBUILT_DATA_DIR"
 
-DEP_DIR=platform-tools-33.0.1
+DEP_DIR=platform-tools-34.0.3
 
-FILENAME=platform-tools_r33.0.1-windows.zip
-SHA256SUM=c1f02d42ea24ef4ff2a405ae7370e764ef4546f9b3e4520f5571a00ed5012c42
+FILENAME=platform-tools_r34.0.3-windows.zip
+SHA256SUM=fce992e93eb786fc9f47df93d83a7b912c46742d45c39d712c02e06d05b72e2b
 
 if [[ -d "$DEP_DIR" ]]
 then

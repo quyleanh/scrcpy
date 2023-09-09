@@ -17,46 +17,69 @@
 #define STR_IMPL_(x) #x
 #define STR(x) STR_IMPL_(x)
 
-#define OPT_RENDER_EXPIRED_FRAMES  1000
-#define OPT_WINDOW_TITLE           1001
-#define OPT_PUSH_TARGET            1002
-#define OPT_ALWAYS_ON_TOP          1003
-#define OPT_CROP                   1004
-#define OPT_RECORD_FORMAT          1005
-#define OPT_PREFER_TEXT            1006
-#define OPT_WINDOW_X               1007
-#define OPT_WINDOW_Y               1008
-#define OPT_WINDOW_WIDTH           1009
-#define OPT_WINDOW_HEIGHT          1010
-#define OPT_WINDOW_BORDERLESS      1011
-#define OPT_MAX_FPS                1012
-#define OPT_LOCK_VIDEO_ORIENTATION 1013
-#define OPT_DISPLAY_ID             1014
-#define OPT_ROTATION               1015
-#define OPT_RENDER_DRIVER          1016
-#define OPT_NO_MIPMAPS             1017
-#define OPT_CODEC_OPTIONS          1018
-#define OPT_FORCE_ADB_FORWARD      1019
-#define OPT_DISABLE_SCREENSAVER    1020
-#define OPT_SHORTCUT_MOD           1021
-#define OPT_NO_KEY_REPEAT          1022
-#define OPT_FORWARD_ALL_CLICKS     1023
-#define OPT_LEGACY_PASTE           1024
-#define OPT_ENCODER_NAME           1025
-#define OPT_POWER_OFF_ON_CLOSE     1026
-#define OPT_V4L2_SINK              1027
-#define OPT_DISPLAY_BUFFER         1028
-#define OPT_V4L2_BUFFER            1029
-#define OPT_TUNNEL_HOST            1030
-#define OPT_TUNNEL_PORT            1031
-#define OPT_NO_CLIPBOARD_AUTOSYNC  1032
-#define OPT_TCPIP                  1033
-#define OPT_RAW_KEY_EVENTS         1034
-#define OPT_NO_DOWNSIZE_ON_ERROR   1035
-#define OPT_OTG                    1036
-#define OPT_NO_CLEANUP             1037
-#define OPT_PRINT_FPS              1038
-#define OPT_NO_POWER_ON            1039
+enum {
+    OPT_BIT_RATE = 1000,
+    OPT_WINDOW_TITLE,
+    OPT_PUSH_TARGET,
+    OPT_ALWAYS_ON_TOP,
+    OPT_CROP,
+    OPT_RECORD_FORMAT,
+    OPT_PREFER_TEXT,
+    OPT_WINDOW_X,
+    OPT_WINDOW_Y,
+    OPT_WINDOW_WIDTH,
+    OPT_WINDOW_HEIGHT,
+    OPT_WINDOW_BORDERLESS,
+    OPT_MAX_FPS,
+    OPT_LOCK_VIDEO_ORIENTATION,
+    OPT_DISPLAY_ID,
+    OPT_ROTATION,
+    OPT_RENDER_DRIVER,
+    OPT_NO_MIPMAPS,
+    OPT_CODEC_OPTIONS,
+    OPT_VIDEO_CODEC_OPTIONS,
+    OPT_FORCE_ADB_FORWARD,
+    OPT_DISABLE_SCREENSAVER,
+    OPT_SHORTCUT_MOD,
+    OPT_NO_KEY_REPEAT,
+    OPT_FORWARD_ALL_CLICKS,
+    OPT_LEGACY_PASTE,
+    OPT_ENCODER,
+    OPT_VIDEO_ENCODER,
+    OPT_POWER_OFF_ON_CLOSE,
+    OPT_V4L2_SINK,
+    OPT_DISPLAY_BUFFER,
+    OPT_V4L2_BUFFER,
+    OPT_TUNNEL_HOST,
+    OPT_TUNNEL_PORT,
+    OPT_NO_CLIPBOARD_AUTOSYNC,
+    OPT_TCPIP,
+    OPT_RAW_KEY_EVENTS,
+    OPT_NO_DOWNSIZE_ON_ERROR,
+    OPT_OTG,
+    OPT_NO_CLEANUP,
+    OPT_PRINT_FPS,
+    OPT_NO_POWER_ON,
+    OPT_CODEC,
+    OPT_VIDEO_CODEC,
+    OPT_NO_AUDIO,
+    OPT_AUDIO_BIT_RATE,
+    OPT_AUDIO_CODEC,
+    OPT_AUDIO_CODEC_OPTIONS,
+    OPT_AUDIO_ENCODER,
+    OPT_LIST_ENCODERS,
+    OPT_LIST_DISPLAYS,
+    OPT_REQUIRE_AUDIO,
+    OPT_AUDIO_BUFFER,
+    OPT_AUDIO_OUTPUT_BUFFER,
+    OPT_NO_DISPLAY,
+    OPT_NO_VIDEO,
+    OPT_NO_AUDIO_PLAYBACK,
+    OPT_NO_VIDEO_PLAYBACK,
+    OPT_AUDIO_SOURCE,
+    OPT_KILL_ADB_ON_CLOSE,
+    OPT_TIME_LIMIT,
+};
 
 struct sc_option {
     char shortopt;
@@ -98,24 +121,94 @@ static const struct sc_option options[] = {
         .text = "Make scrcpy window always on top (above other windows).",
     },
     {
-        .shortopt = 'b',
-        .longopt = "bit-rate",
+        .longopt_id = OPT_AUDIO_BIT_RATE,
+        .longopt = "audio-bit-rate",
         .argdesc = "value",
-        .text = "Encode the video at the gitven bit-rate, expressed in bits/s. "
+        .text = "Encode the audio at the given bit rate, expressed in bits/s. "
                 "Unit suffixes are supported: 'K' (x1000) and 'M' (x1000000).\n"
-                "Default is " STR(DEFAULT_BIT_RATE) ".",
+                "Default is 128K (128000).",
     },
     {
-        .longopt_id = OPT_CODEC_OPTIONS,
-        .longopt = "codec-options",
+        .longopt_id = OPT_AUDIO_BUFFER,
+        .longopt = "audio-buffer",
+        .argdesc = "ms",
+        .text = "Configure the audio buffering delay (in milliseconds).\n"
+                "Lower values decrease the latency, but increase the "
+                "likelyhood of buffer underrun (causing audio glitches).\n"
+                "Default is 50.",
+    },
+    {
+        .longopt_id = OPT_AUDIO_CODEC,
+        .longopt = "audio-codec",
+        .argdesc = "name",
+        .text = "Select an audio codec (opus, aac or raw).\n"
+                "Default is opus.",
+    },
+    {
+        .longopt_id = OPT_AUDIO_CODEC_OPTIONS,
+        .longopt = "audio-codec-options",
         .argdesc = "key[:type]=value[,...]",
         .text = "Set a list of comma-separated key:type=value options for the "
-                "device encoder.\n"
+                "device audio encoder.\n"
                 "The possible values for 'type' are 'int' (default), 'long', "
                 "'float' and 'string'.\n"
                 "The list of possible codec options is available in the "
                 "Android documentation: "
                 "<https://d.android.com/reference/android/media/MediaFormat>",
+    },
+    {
+        .longopt_id = OPT_AUDIO_ENCODER,
+        .longopt = "audio-encoder",
+        .argdesc = "name",
+        .text = "Use a specific MediaCodec audio encoder (depending on the "
+                "codec provided by --audio-codec).\n"
+                "The available encoders can be listed by --list-encoders.",
+    },
+    {
+        .longopt_id = OPT_AUDIO_SOURCE,
+        .longopt = "audio-source",
+        .argdesc = "source",
+        .text = "Select the audio source (output or mic).\n"
+                "Default is output.",
+    },
+    {
+        .longopt_id = OPT_AUDIO_OUTPUT_BUFFER,
+        .longopt = "audio-output-buffer",
+        .argdesc = "ms",
+        .text = "Configure the size of the SDL audio output buffer (in "
+                "milliseconds).\n"
+                "If you get \"robotic\" audio playback, you should test with "
+                "a higher value (10). Do not change this setting otherwise.\n"
+                "Default is 5.",
+    },
+    {
+        .shortopt = 'b',
+        .longopt = "video-bit-rate",
+        .argdesc = "value",
+        .text = "Encode the video at the given bit rate, expressed in bits/s. "
+                "Unit suffixes are supported: 'K' (x1000) and 'M' (x1000000).\n"
+                "Default is 8M (8000000).",
+    },
+    {
+        // deprecated
+        .longopt_id = OPT_BIT_RATE,
+        .longopt = "bit-rate",
+        .argdesc = "value",
+    },
+    {
+        // Not really deprecated (--codec has never been released), but without
+        // declaring an explicit --codec option, getopt_long() partial matching
+        // behavior would consider --codec to be equivalent to --codec-options,
+        // which would be confusing.
+        .longopt_id = OPT_CODEC,
+        .longopt = "codec",
+        .argdesc = "value",
+    },
+    {
+        // deprecated
+        .longopt_id = OPT_CODEC_OPTIONS,
+        .longopt = "codec-options",
+        .argdesc = "key[:type]=value[,...]",
     },
     {
         .longopt_id = OPT_CROP,
@@ -141,10 +234,9 @@ static const struct sc_option options[] = {
         .longopt_id = OPT_DISPLAY_ID,
         .longopt = "display",
         .argdesc = "id",
-        .text = "Specify the display id to mirror.\n"
-                "The list of possible display ids can be listed by:\n"
-                "    adb shell dumpsys display\n"
-                "(search \"mDisplayId=\" in the output)\n"
+        .text = "Specify the device display id to mirror.\n"
+                "The available display ids can be listed by:\n"
+                "    scrcpy --list-displays\n"
                 "Default is 0.",
     },
     {
@@ -162,10 +254,15 @@ static const struct sc_option options[] = {
                 "Also see -d (--select-usb).",
     },
     {
-        .longopt_id = OPT_ENCODER_NAME,
+        // deprecated
+        .longopt_id = OPT_ENCODER,
         .longopt = "encoder",
         .argdesc = "name",
-        .text = "Use a specific MediaCodec encoder (must be a H.264 encoder).",
+    },
+    {
+        .shortopt = 'f',
+        .longopt = "fullscreen",
+        .text = "Start in fullscreen.",
     },
     {
         .longopt_id = OPT_FORCE_ADB_FORWARD,
@@ -181,9 +278,14 @@ static const struct sc_option options[] = {
                 "shortcuts and forwards the clicks to the device instead.",
     },
     {
-        .shortopt = 'f',
-        .longopt = "fullscreen",
-        .text = "Start in fullscreen.",
+        .shortopt = 'h',
+        .longopt = "help",
+        .text = "Print this help.",
+    },
+    {
+        .longopt_id = OPT_KILL_ADB_ON_CLOSE,
+        .longopt = "kill-adb-on-close",
+        .text = "Kill adb when scrcpy terminates.",
     },
     {
         .shortopt = 'K',
@@ -203,17 +305,22 @@ static const struct sc_option options[] = {
                 "Also see --hid-mouse.",
     },
     {
-        .shortopt = 'h',
-        .longopt = "help",
-        .text = "Print this help.",
-    },
-    {
         .longopt_id = OPT_LEGACY_PASTE,
         .longopt = "legacy-paste",
         .text = "Inject computer clipboard text as a sequence of key events "
                 "on Ctrl+v (like MOD+Shift+v).\n"
                 "This is a workaround for some devices not behaving as "
                 "expected when setting the device clipboard programmatically.",
+    },
+    {
+        .longopt_id = OPT_LIST_DISPLAYS,
+        .longopt = "list-displays",
+        .text = "List device displays.",
+    },
+    {
+        .longopt_id = OPT_LIST_ENCODERS,
+        .longopt = "list-encoders",
+        .text = "List video and audio encoders available on the device.",
     },
     {
         .longopt_id = OPT_LOCK_VIDEO_ORIENTATION,
@@ -230,11 +337,13 @@ static const struct sc_option options[] = {
                 "\"initial\".",
     },
     {
-        .longopt_id = OPT_MAX_FPS,
-        .longopt = "max-fps",
+        .shortopt = 'm',
+        .longopt = "max-size",
         .argdesc = "value",
-        .text = "Limit the frame rate of screen capture (officially supported "
-                "since Android 10, but may work on earlier versions).",
+        .text = "Limit both the width and height of the video to value. The "
+                "other dimension is computed so that the device aspect-ratio "
+                "is preserved.\n"
+                "Default is 0 (unlimited).",
     },
     {
         .shortopt = 'M',
@@ -248,13 +357,32 @@ static const struct sc_option options[] = {
                 "Also see --hid-keyboard.",
     },
     {
-        .shortopt = 'm',
-        .longopt = "max-size",
+        .longopt_id = OPT_MAX_FPS,
+        .longopt = "max-fps",
         .argdesc = "value",
-        .text = "Limit both the width and height of the video to value. The "
-                "other dimension is computed so that the device aspect-ratio "
-                "is preserved.\n"
-                "Default is 0 (unlimited).",
+        .text = "Limit the frame rate of screen capture (officially supported "
+                "since Android 10, but may work on earlier versions).",
+    },
+    {
+        .shortopt = 'n',
+        .longopt = "no-control",
+        .text = "Disable device control (mirror the device in read-only).",
+    },
+    {
+        .shortopt = 'N',
+        .longopt = "no-playback",
+        .text = "Disable video and audio playback on the computer (equivalent "
+                "to --no-video-playback --no-audio-playback).",
+    },
+    {
+        .longopt_id = OPT_NO_AUDIO,
+        .longopt = "no-audio",
+        .text = "Disable audio forwarding.",
+    },
+    {
+        .longopt_id = OPT_NO_AUDIO_PLAYBACK,
+        .longopt = "no-audio-playback",
+        .text = "Disable audio playback on the computer.",
     },
     {
         .longopt_id = OPT_NO_CLEANUP,
@@ -281,15 +409,9 @@ static const struct sc_option options[] = {
                 "This option disables this behavior.",
     },
     {
-        .shortopt = 'n',
-        .longopt = "no-control",
-        .text = "Disable device control (mirror the device in read-only).",
-    },
-    {
-        .shortopt = 'N',
+        // deprecated
+        .longopt_id = OPT_NO_DISPLAY,
         .longopt = "no-display",
-        .text = "Do not display device (only when screen recording or V4L2 "
-                "sink is enabled).",
     },
     {
         .longopt_id = OPT_NO_KEY_REPEAT,
@@ -307,6 +429,16 @@ static const struct sc_option options[] = {
         .longopt_id = OPT_NO_POWER_ON,
         .longopt = "no-power-on",
         .text = "Do not power on the device on start.",
+    },
+    {
+        .longopt_id = OPT_NO_VIDEO,
+        .longopt = "no-video",
+        .text = "Disable video forwarding.",
+    },
+    {
+        .longopt_id = OPT_NO_VIDEO_PLAYBACK,
+        .longopt = "no-video-playback",
+        .text = "Disable video playback on the computer.",
     },
     {
         .longopt_id = OPT_OTG,
@@ -360,17 +492,17 @@ static const struct sc_option options[] = {
                 "Default is \"/sdcard/Download/\".",
     },
     {
-        .longopt_id = OPT_RAW_KEY_EVENTS,
-        .longopt = "raw-key-events",
-        .text = "Inject key events for all input keys, and ignore text events."
-    },
-    {
         .shortopt = 'r',
         .longopt = "record",
         .argdesc = "file.mp4",
         .text = "Record screen to file.\n"
                 "The format is determined by the --record-format option if "
                 "set, or by the file extension (.mp4 or .mkv).",
+    },
+    {
+        .longopt_id = OPT_RAW_KEY_EVENTS,
+        .longopt = "raw-key-events",
+        .text = "Inject key events for all input keys, and ignore text events."
     },
     {
         .longopt_id = OPT_RECORD_FORMAT,
@@ -389,9 +521,11 @@ static const struct sc_option options[] = {
                 "<https://wiki.libsdl.org/SDL_HINT_RENDER_DRIVER>",
     },
     {
-        // deprecated
-        .longopt_id = OPT_RENDER_EXPIRED_FRAMES,
-        .longopt = "render-expired-frames",
+        .longopt_id = OPT_REQUIRE_AUDIO,
+        .longopt = "require-audio",
+        .text = "By default, scrcpy mirrors only the video when audio capture "
+                "fails on the device. This option makes scrcpy fail if audio "
+                "is enabled but does not work."
     },
     {
         .longopt_id = OPT_ROTATION,
@@ -409,6 +543,11 @@ static const struct sc_option options[] = {
                 "are connected to adb.",
     },
     {
+        .shortopt = 'S',
+        .longopt = "turn-screen-off",
+        .text = "Turn the device screen off immediately.",
+    },
+    {
         .longopt_id = OPT_SHORTCUT_MOD,
         .longopt = "shortcut-mod",
         .argdesc = "key[+...][,...]",
@@ -420,11 +559,6 @@ static const struct sc_option options[] = {
                 "For example, to use either LCtrl+LAlt or LSuper for scrcpy "
                 "shortcuts, pass \"lctrl+lalt,lsuper\".\n"
                 "Default is \"lalt,lsuper\" (left-Alt or left-Super).",
-    },
-    {
-        .shortopt = 'S',
-        .longopt = "turn-screen-off",
-        .text = "Turn the device screen off immediately.",
     },
     {
         .shortopt = 't',
@@ -448,6 +582,12 @@ static const struct sc_option options[] = {
                 "this address before starting.",
     },
     {
+        .longopt_id = OPT_TIME_LIMIT,
+        .longopt = "time-limit",
+        .argdesc = "seconds",
+        .text = "Set the maximum mirroring time, in seconds.",
+    },
+    {
         .longopt_id = OPT_TUNNEL_HOST,
         .longopt = "tunnel-host",
         .argdesc = "ip",
@@ -465,6 +605,22 @@ static const struct sc_option options[] = {
                 "--force-adb-forward.\n"
                 "Default is 0 (not forced): the local port used for "
                 "establishing the tunnel will be used.",
+    },
+    {
+        .shortopt = 'v',
+        .longopt = "version",
+        .text = "Print the version of scrcpy.",
+    },
+    {
+        .shortopt = 'V',
+        .longopt = "verbosity",
+        .argdesc = "value",
+        .text = "Set the log level (verbose, debug, info, warn or error).\n"
+#ifndef NDEBUG
+                "Default is debug.",
+#else
+                "Default is info.",
+#endif
     },
     {
         .longopt_id = OPT_V4L2_SINK,
@@ -487,20 +643,31 @@ static const struct sc_option options[] = {
                 "This option is only available on Linux.",
     },
     {
-        .shortopt = 'V',
-        .longopt = "verbosity",
-        .argdesc = "value",
-        .text = "Set the log level (verbose, debug, info, warn or error).\n"
-#ifndef NDEBUG
-                "Default is debug.",
-#else
-                "Default is info.",
-#endif
+        .longopt_id = OPT_VIDEO_CODEC,
+        .longopt = "video-codec",
+        .argdesc = "name",
+        .text = "Select a video codec (h264, h265 or av1).\n"
+                "Default is h264.",
     },
     {
-        .shortopt = 'v',
-        .longopt = "version",
-        .text = "Print the version of scrcpy.",
+        .longopt_id = OPT_VIDEO_CODEC_OPTIONS,
+        .longopt = "video-codec-options",
+        .argdesc = "key[:type]=value[,...]",
+        .text = "Set a list of comma-separated key:type=value options for the "
+                "device video encoder.\n"
+                "The possible values for 'type' are 'int' (default), 'long', "
+                "'float' and 'string'.\n"
+                "The list of possible codec options is available in the "
+                "Android documentation: "
+                "<https://d.android.com/reference/android/media/MediaFormat>",
+    },
+    {
+        .longopt_id = OPT_VIDEO_ENCODER,
+        .longopt = "video-encoder",
+        .argdesc = "name",
+        .text = "Use a specific MediaCodec video encoder (depending on the "
+                "codec provided by --video-codec).\n"
+                "The available encoders can be listed by --list-encoders.",
     },
     {
         .shortopt = 'w',
@@ -1094,6 +1261,19 @@ parse_buffering_time(const char *s, sc_tick *tick) {
 }
 
 static bool
+parse_audio_output_buffer(const char *s, sc_tick *tick) {
+    long value;
+    bool ok = parse_integer_arg(s, &value, false, 0, 1000,
+                                "audio output buffer");
+    if (!ok) {
+        return false;
+    }
+
+    *tick = SC_TICK_FROM_MS(value);
+    return true;
+}
+
+static bool
 parse_lock_video_orientation(const char *s,
                              enum sc_lock_video_orientation *lock_mode) {
     if (!s || !strcmp(s, "initial")) {
@@ -1332,18 +1512,39 @@ sc_parse_shortcut_mods(const char *s, struct sc_shortcut_mods *mods) {
 }
 #endif
 
+static enum sc_record_format
+get_record_format(const char *name) {
+    if (!strcmp(name, "mp4")) {
+        return SC_RECORD_FORMAT_MP4;
+    }
+    if (!strcmp(name, "mkv")) {
+        return SC_RECORD_FORMAT_MKV;
+    }
+    if (!strcmp(name, "m4a")) {
+        return SC_RECORD_FORMAT_M4A;
+    }
+    if (!strcmp(name, "mka")) {
+        return SC_RECORD_FORMAT_MKA;
+    }
+    if (!strcmp(name, "opus")) {
+        return SC_RECORD_FORMAT_OPUS;
+    }
+    if (!strcmp(name, "aac")) {
+        return SC_RECORD_FORMAT_AAC;
+    }
+    return 0;
+}
+
 static bool
 parse_record_format(const char *optarg, enum sc_record_format *format) {
-    if (!strcmp(optarg, "mp4")) {
-        *format = SC_RECORD_FORMAT_MP4;
-        return true;
+    enum sc_record_format fmt = get_record_format(optarg);
+    if (!fmt) {
+        LOGE("Unsupported format: %s (expected mp4 or mkv)", optarg);
+        return false;
     }
-    if (!strcmp(optarg, "mkv")) {
-        *format = SC_RECORD_FORMAT_MKV;
-        return true;
-    }
-    LOGE("Unsupported format: %s (expected mp4 or mkv)", optarg);
-    return false;
+
+    *format = fmt;
+    return true;
 }
 
 static bool
@@ -1363,18 +1564,77 @@ parse_port(const char *optarg, uint16_t *port) {
 
 static enum sc_record_format
 guess_record_format(const char *filename) {
-    size_t len = strlen(filename);
-    if (len < 4) {
+    const char *dot = strrchr(filename, '.');
+    if (!dot) {
         return 0;
     }
-    const char *ext = &filename[len - 4];
-    if (!strcmp(ext, ".mp4")) {
-        return SC_RECORD_FORMAT_MP4;
+
+    const char *ext = dot + 1;
+    return get_record_format(ext);
+}
+
+static bool
+parse_video_codec(const char *optarg, enum sc_codec *codec) {
+    if (!strcmp(optarg, "h264")) {
+        *codec = SC_CODEC_H264;
+        return true;
     }
-    if (!strcmp(ext, ".mkv")) {
-        return SC_RECORD_FORMAT_MKV;
+    if (!strcmp(optarg, "h265")) {
+        *codec = SC_CODEC_H265;
+        return true;
     }
-    return 0;
+    if (!strcmp(optarg, "av1")) {
+        *codec = SC_CODEC_AV1;
+        return true;
+    }
+    LOGE("Unsupported video codec: %s (expected h264, h265 or av1)", optarg);
+    return false;
+}
+
+static bool
+parse_audio_codec(const char *optarg, enum sc_codec *codec) {
+    if (!strcmp(optarg, "opus")) {
+        *codec = SC_CODEC_OPUS;
+        return true;
+    }
+    if (!strcmp(optarg, "aac")) {
+        *codec = SC_CODEC_AAC;
+        return true;
+    }
+    if (!strcmp(optarg, "raw")) {
+        *codec = SC_CODEC_RAW;
+        return true;
+    }
+    LOGE("Unsupported audio codec: %s (expected opus, aac or raw)", optarg);
+    return false;
+}
+
+static bool
+parse_audio_source(const char *optarg, enum sc_audio_source *source) {
+    if (!strcmp(optarg, "mic")) {
+        *source = SC_AUDIO_SOURCE_MIC;
+        return true;
+    }
+
+    if (!strcmp(optarg, "output")) {
+        *source = SC_AUDIO_SOURCE_OUTPUT;
+        return true;
+    }
+
+    LOGE("Unsupported audio source: %s (expected output or mic)", optarg);
+    return false;
+}
+
+static bool
+parse_time_limit(const char *s, sc_tick *tick) {
+    long value;
+    bool ok = parse_integer_arg(s, &value, false, 0, 0x7FFFFFFF, "time limit");
+    if (!ok) {
+        return false;
+    }
+
+    *tick = SC_TICK_FROM_SEC(value);
+    return true;
 }
 
 static bool
@@ -1387,8 +1647,17 @@ parse_args_with_getopt(struct scrcpy_cli_args *args, int argc, char *argv[],
     int c;
     while ((c = getopt_long(argc, argv, optstring, longopts, NULL)) != -1) {
         switch (c) {
+            case OPT_BIT_RATE:
+                LOGE("--bit-rate has been removed, "
+                     "use --video-bit-rate or --audio-bit-rate.");
+                return false;
             case 'b':
-                if (!parse_bit_rate(optarg, &opts->bit_rate)) {
+                if (!parse_bit_rate(optarg, &opts->video_bit_rate)) {
+                    return false;
+                }
+                break;
+            case OPT_AUDIO_BIT_RATE:
+                if (!parse_bit_rate(optarg, &opts->audio_bit_rate)) {
                     return false;
                 }
                 break;
@@ -1409,9 +1678,6 @@ parse_args_with_getopt(struct scrcpy_cli_args *args, int argc, char *argv[],
             case 'f':
                 opts->fullscreen = true;
                 break;
-            case 'F':
-                LOGW("Deprecated option -F. Use --record-format instead.");
-                // fall through
             case OPT_RECORD_FORMAT:
                 if (!parse_record_format(optarg, &opts->record_format)) {
                     return false;
@@ -1465,8 +1731,18 @@ parse_args_with_getopt(struct scrcpy_cli_args *args, int argc, char *argv[],
             case 'n':
                 opts->control = false;
                 break;
+            case OPT_NO_DISPLAY:
+                LOGW("--no-display is deprecated, use --no-playback instead.");
+                // fall through
             case 'N':
-                opts->display = false;
+                opts->video_playback = false;
+                opts->audio_playback = false;
+                break;
+            case OPT_NO_VIDEO_PLAYBACK:
+                opts->video_playback = false;
+                break;
+            case OPT_NO_AUDIO_PLAYBACK:
+                opts->audio_playback = false;
                 break;
             case 'p':
                 if (!parse_port_range(optarg, &opts->port_range)) {
@@ -1498,10 +1774,6 @@ parse_args_with_getopt(struct scrcpy_cli_args *args, int argc, char *argv[],
                 break;
             case 'w':
                 opts->stay_awake = true;
-                break;
-            case OPT_RENDER_EXPIRED_FRAMES:
-                LOGW("Option --render-expired-frames has been removed. This "
-                     "flag has been ignored.");
                 break;
             case OPT_WINDOW_TITLE:
                 opts->window_title = optarg;
@@ -1561,10 +1833,24 @@ parse_args_with_getopt(struct scrcpy_cli_args *args, int argc, char *argv[],
                 opts->forward_key_repeat = false;
                 break;
             case OPT_CODEC_OPTIONS:
-                opts->codec_options = optarg;
+                LOGE("--codec-options has been removed, "
+                     "use --video-codec-options or --audio-codec-options.");
+                return false;
+            case OPT_VIDEO_CODEC_OPTIONS:
+                opts->video_codec_options = optarg;
                 break;
-            case OPT_ENCODER_NAME:
-                opts->encoder_name = optarg;
+            case OPT_AUDIO_CODEC_OPTIONS:
+                opts->audio_codec_options = optarg;
+                break;
+            case OPT_ENCODER:
+                LOGE("--encoder has been removed, "
+                     "use --video-encoder or --audio-encoder.");
+                return false;
+            case OPT_VIDEO_ENCODER:
+                opts->video_encoder = optarg;
+                break;
+            case OPT_AUDIO_ENCODER:
+                opts->audio_encoder = optarg;
                 break;
             case OPT_FORCE_ADB_FORWARD:
                 opts->force_adb_forward = true;
@@ -1601,6 +1887,12 @@ parse_args_with_getopt(struct scrcpy_cli_args *args, int argc, char *argv[],
             case OPT_NO_DOWNSIZE_ON_ERROR:
                 opts->downsize_on_error = false;
                 break;
+            case OPT_NO_VIDEO:
+                opts->video = false;
+                break;
+            case OPT_NO_AUDIO:
+                opts->audio = false;
+                break;
             case OPT_NO_CLEANUP:
                 opts->cleanup = false;
                 break;
@@ -1609,6 +1901,20 @@ parse_args_with_getopt(struct scrcpy_cli_args *args, int argc, char *argv[],
                 break;
             case OPT_PRINT_FPS:
                 opts->start_fps_counter = true;
+                break;
+            case OPT_CODEC:
+                LOGE("--codec has been removed, "
+                     "use --video-codec or --audio-codec.");
+                return false;
+            case OPT_VIDEO_CODEC:
+                if (!parse_video_codec(optarg, &opts->video_codec)) {
+                    return false;
+                }
+                break;
+            case OPT_AUDIO_CODEC:
+                if (!parse_audio_codec(optarg, &opts->audio_codec)) {
+                    return false;
+                }
                 break;
             case OPT_OTG:
 #ifdef HAVE_USB
@@ -1634,9 +1940,43 @@ parse_args_with_getopt(struct scrcpy_cli_args *args, int argc, char *argv[],
                 }
                 break;
 #else
-                LOGE("V4L2 (--v4l2-buffer) is only available on Linux.");
+                LOGE("V4L2 (--v4l2-buffer) is disabled (or unsupported on this "
+                     "platform).");
                 return false;
 #endif
+            case OPT_LIST_ENCODERS:
+                opts->list_encoders = true;
+                break;
+            case OPT_LIST_DISPLAYS:
+                opts->list_displays = true;
+                break;
+            case OPT_REQUIRE_AUDIO:
+                opts->require_audio = true;
+                break;
+            case OPT_AUDIO_BUFFER:
+                if (!parse_buffering_time(optarg, &opts->audio_buffer)) {
+                    return false;
+                }
+                break;
+            case OPT_AUDIO_OUTPUT_BUFFER:
+                if (!parse_audio_output_buffer(optarg,
+                                               &opts->audio_output_buffer)) {
+                    return false;
+                }
+                break;
+            case OPT_AUDIO_SOURCE:
+                if (!parse_audio_source(optarg, &opts->audio_source)) {
+                    return false;
+                }
+                break;
+            case OPT_KILL_ADB_ON_CLOSE:
+                opts->kill_adb_on_close = true;
+                break;
+            case OPT_TIME_LIMIT:
+                if (!parse_time_limit(optarg, &opts->time_limit)) {
+                    return false;
+                }
+                break;
             default:
                 // getopt prints the error message on stderr
                 return false;
@@ -1665,14 +2005,52 @@ parse_args_with_getopt(struct scrcpy_cli_args *args, int argc, char *argv[],
         return false;
     }
 
+    bool otg = false;
+    bool v4l2 = false;
+#ifdef HAVE_USB
+    otg = opts->otg;
+#endif
 #ifdef HAVE_V4L2
-    if (!opts->display && !opts->record_filename && !opts->v4l2_device) {
-        LOGE("-N/--no-display requires either screen recording (-r/--record)"
-             " or sink to v4l2loopback device (--v4l2-sink)");
+    v4l2 = !!opts->v4l2_device;
+#endif
+
+    if (!opts->video) {
+        opts->video_playback = false;
+    }
+
+    if (!opts->audio) {
+        opts->audio_playback = false;
+    }
+
+    if (!opts->video_playback && !otg) {
+        // If video playback is disabled and OTG are disabled, then there is
+        // no way to control the device.
+        opts->control = false;
+    }
+
+    if (opts->video && !opts->video_playback && !opts->record_filename
+            && !v4l2) {
+        LOGI("No video playback, no recording, no V4L2 sink: video disabled");
+        opts->video = false;
+    }
+
+    if (opts->audio && !opts->audio_playback && !opts->record_filename) {
+        LOGI("No audio playback, no recording: audio disabled");
+        opts->audio = false;
+    }
+
+    if (!opts->video && !opts->audio && !otg) {
+        LOGE("No video, no audio, no OTG: nothing to do");
         return false;
     }
 
-    if (opts->v4l2_device) {
+    if (!opts->video && !otg) {
+        // If video is disabled, then scrcpy must exit on audio failure.
+        opts->require_audio = true;
+    }
+
+#ifdef HAVE_V4L2
+    if (v4l2) {
         if (opts->lock_video_orientation ==
                 SC_LOCK_VIDEO_ORIENTATION_UNLOCKED) {
             LOGI("Video orientation is locked for v4l2 sink. "
@@ -1690,11 +2068,6 @@ parse_args_with_getopt(struct scrcpy_cli_args *args, int argc, char *argv[],
         LOGE("V4L2 buffer value without V4L2 sink\n");
         return false;
     }
-#else
-    if (!opts->display && !opts->record_filename) {
-        LOGE("-N/--no-display requires screen recording (-r/--record)");
-        return false;
-    }
 #endif
 
     if ((opts->tunnel_host || opts->tunnel_port) && !opts->force_adb_forward) {
@@ -1708,13 +2081,52 @@ parse_args_with_getopt(struct scrcpy_cli_args *args, int argc, char *argv[],
         return false;
     }
 
-    if (opts->record_filename && !opts->record_format) {
-        opts->record_format = guess_record_format(opts->record_filename);
+    if (opts->record_filename) {
         if (!opts->record_format) {
-            LOGE("No format specified for \"%s\" "
-                 "(try with --record-format=mkv)",
-                 opts->record_filename);
+            opts->record_format = guess_record_format(opts->record_filename);
+            if (!opts->record_format) {
+                LOGE("No format specified for \"%s\" "
+                     "(try with --record-format=mkv)",
+                     opts->record_filename);
+                return false;
+            }
+        }
+
+        if (opts->audio_codec == SC_CODEC_RAW) {
+            LOGW("Recording does not support RAW audio codec");
             return false;
+        }
+
+        if (opts->video
+                && sc_record_format_is_audio_only(opts->record_format)) {
+            LOGE("Audio container does not support video stream");
+            return false;
+        }
+
+        if (opts->record_format == SC_RECORD_FORMAT_OPUS
+                && opts->audio_codec != SC_CODEC_OPUS) {
+            LOGE("Recording to OPUS file requires an OPUS audio stream "
+                 "(try with --audio-codec=opus)");
+            return false;
+        }
+
+        if (opts->record_format == SC_RECORD_FORMAT_AAC
+                && opts->audio_codec != SC_CODEC_AAC) {
+            LOGE("Recording to AAC file requires an AAC audio stream "
+                 "(try with --audio-codec=aac)");
+            return false;
+        }
+    }
+
+    if (opts->audio_codec == SC_CODEC_RAW) {
+        if (opts->audio_bit_rate) {
+            LOGW("--audio-bit-rate is ignored for raw audio codec");
+        }
+        if (opts->audio_codec_options) {
+            LOGW("--audio-codec-options is ignored for raw audio codec");
+        }
+        if (opts->audio_encoder) {
+            LOGW("--audio-encoder is ignored for raw audio codec");
         }
     }
 
@@ -1737,11 +2149,9 @@ parse_args_with_getopt(struct scrcpy_cli_args *args, int argc, char *argv[],
         }
     }
 
-#ifdef HAVE_USB
-
 # ifdef _WIN32
-    if (!opts->otg && (opts->keyboard_input_mode == SC_KEYBOARD_INPUT_MODE_HID
-                    || opts->mouse_input_mode == SC_MOUSE_INPUT_MODE_HID)) {
+    if (!otg && (opts->keyboard_input_mode == SC_KEYBOARD_INPUT_MODE_HID
+                || opts->mouse_input_mode == SC_MOUSE_INPUT_MODE_HID)) {
         LOGE("On Windows, it is not possible to open a USB device already open "
              "by another process (like adb).");
         LOGE("Therefore, -K/--hid-keyboard and -M/--hid-mouse may only work in "
@@ -1750,7 +2160,7 @@ parse_args_with_getopt(struct scrcpy_cli_args *args, int argc, char *argv[],
     }
 # endif
 
-    if (opts->otg) {
+    if (otg) {
         // OTG mode is compatible with only very few options.
         // Only report obvious errors.
         if (opts->record_filename) {
@@ -1777,14 +2187,11 @@ parse_args_with_getopt(struct scrcpy_cli_args *args, int argc, char *argv[],
             LOGE("OTG mode: could not select display");
             return false;
         }
-# ifdef HAVE_V4L2
-        if (opts->v4l2_device) {
+        if (v4l2) {
             LOGE("OTG mode: could not sink to V4L2 device");
             return false;
         }
-# endif
     }
-#endif
 
     return true;
 }

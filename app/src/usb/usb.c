@@ -23,6 +23,11 @@ read_string(libusb_device_handle *handle, uint8_t desc_index) {
 
     // When non-negative, 'result' contains the number of bytes written
     char *s = malloc(result + 1);
+    if (!s) {
+        LOG_OOM();
+        return NULL;
+    }
+
     memcpy(s, buffer, result);
     s[result] = '\0';
     return s;
@@ -208,8 +213,8 @@ sc_usb_select_device(struct sc_usb *usb, const char *serial,
     assert(sel_count == 1); // sel_idx is valid only if sel_count == 1
     struct sc_usb_device *device = &vec.data[sel_idx];
 
-    LOGD("USB device found:");
-    sc_usb_devices_log(SC_LOG_LEVEL_DEBUG, vec.data, vec.size);
+    LOGI("USB device found:");
+    sc_usb_devices_log(SC_LOG_LEVEL_INFO, vec.data, vec.size);
 
     // Move device into out_device (do not destroy device)
     sc_usb_device_move(out_device, device);
