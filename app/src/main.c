@@ -15,11 +15,17 @@
 #include "scrcpy.h"
 #include "usb/scrcpy_otg.h"
 #include "util/log.h"
+#include "util/net.h"
 #include "version.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#include "util/str.h"
+#endif
+
 int
-main(int argc, char *argv[]) {
-#ifdef __WINDOWS__
+main_scrcpy(int argc, char *argv[]) {
+#ifdef _WIN32
     // disable buffering, we want logs immediately
     // even line buffering (setvbuf() with mode _IOLBF) is not sufficient
     setbuf(stdout, NULL);
@@ -65,9 +71,11 @@ main(int argc, char *argv[]) {
     }
 #endif
 
-    if (avformat_network_init()) {
+    if (!net_init()) {
         return SCRCPY_EXIT_FAILURE;
     }
+
+    sc_log_configure();
 
 #ifdef HAVE_USB
     enum scrcpy_exit_code ret = args.opts.otg ? scrcpy_otg(&args.opts)
@@ -76,7 +84,54 @@ main(int argc, char *argv[]) {
     enum scrcpy_exit_code ret = scrcpy(&args.opts);
 #endif
 
-    avformat_network_deinit(); // ignore failure
+    return ret;
+}
+
+int
+main(int argc, char *argv[]) {
+#ifndef _WIN32
+    return main_scrcpy(argc, argv);
+#else
+    (void) argc;
+    (void) argv;
+    int wargc;
+    wchar_t **wargv = CommandLineToArgvW(GetCommandLineW(), &wargc);
+    if (!wargv) {
+        LOG_OOM();
+        return SCRCPY_EXIT_FAILURE;
+    }
+
+    char **argv_utf8 = malloc((wargc + 1) * sizeof(*argv_utf8));
+    if (!argv_utf8) {
+        LOG_OOM();
+        LocalFree(wargv);
+        return SCRCPY_EXIT_FAILURE;
+    }
+
+    argv_utf8[wargc] = NULL;
+
+    for (int i = 0; i < wargc; ++i) {
+        argv_utf8[i] = sc_str_from_wchars(wargv[i]);
+        if (!argv_utf8[i]) {
+            LOG_OOM();
+            for (int j = 0; j < i; ++j) {
+                free(argv_utf8[j]);
+            }
+            LocalFree(wargv);
+            free(argv_utf8);
+            return SCRCPY_EXIT_FAILURE;
+        }
+    }
+
+    LocalFree(wargv);
+
+    int ret = main_scrcpy(wargc, argv_utf8);
+
+    for (int i = 0; i < wargc; ++i) {
+        free(argv_utf8[i]);
+    }
+    free(argv_utf8);
 
     return ret;
+#endif
 }
