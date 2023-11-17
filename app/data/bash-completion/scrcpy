@@ -10,10 +10,16 @@ _scrcpy() {
         --audio-source=
         --audio-output-buffer=
         -b --video-bit-rate=
+        --camera-ar=
+        --camera-id=
+        --camera-facing=
+        --camera-fps=
+        --camera-high-speed
+        --camera-size=
         --crop=
         -d --select-usb
         --disable-screensaver
-        --display=
+        --display-id=
         --display-buffer=
         -e --select-tcpip
         -f --fullscreen
@@ -23,6 +29,8 @@ _scrcpy() {
         --kill-adb-on-close
         -K --hid-keyboard
         --legacy-paste
+        --list-camera-sizes
+        --list-cameras
         --list-displays
         --list-encoders
         --lock-video-orientation
@@ -44,6 +52,8 @@ _scrcpy() {
         --no-video-playback
         --otg
         -p --port=
+        --pause-on-exit
+        --pause-on-exit=
         --power-off-on-close
         --prefer-text
         --print-fps
@@ -70,6 +80,7 @@ _scrcpy() {
         --video-codec=
         --video-codec-options=
         --video-encoder=
+        --video-source=
         -w --stay-awake
         --window-borderless
         --window-title=
@@ -89,12 +100,24 @@ _scrcpy() {
             COMPREPLY=($(compgen -W 'opus aac raw' -- "$cur"))
             return
             ;;
+        --video-source)
+            COMPREPLY=($(compgen -W 'display camera' -- "$cur"))
+            return
+            ;;
         --audio-source)
             COMPREPLY=($(compgen -W 'output mic' -- "$cur"))
             return
             ;;
+        --camera-facing)
+            COMPREPLY=($(compgen -W 'front back external' -- "$cur"))
+            return
+            ;;
         --lock-video-orientation)
             COMPREPLY=($(compgen -W 'unlocked initial 0 1 2 3' -- "$cur"))
+            return
+            ;;
+        --pause-on-exit)
+            COMPREPLY=($(compgen -W 'true false if-error' -- "$cur"))
             return
             ;;
         -r|--record)
@@ -133,8 +156,12 @@ _scrcpy() {
         |--audio-codec-options \
         |--audio-encoder \
         |--audio-output-buffer \
+        |--camera-ar \
+        |--camera-id \
+        |--camera-fps \
+        |--camera-size \
         |--crop \
-        |--display \
+        |--display-id \
         |--display-buffer \
         |--max-fps \
         |-m|--max-size \

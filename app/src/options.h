@@ -44,9 +44,22 @@ enum sc_codec {
     SC_CODEC_RAW,
 };
 
+enum sc_video_source {
+    SC_VIDEO_SOURCE_DISPLAY,
+    SC_VIDEO_SOURCE_CAMERA,
+};
+
 enum sc_audio_source {
+    SC_AUDIO_SOURCE_AUTO, // OUTPUT for video DISPLAY, MIC for video CAMERA
     SC_AUDIO_SOURCE_OUTPUT,
     SC_AUDIO_SOURCE_MIC,
+};
+
+enum sc_camera_facing {
+    SC_CAMERA_FACING_ANY,
+    SC_CAMERA_FACING_FRONT,
+    SC_CAMERA_FACING_BACK,
+    SC_CAMERA_FACING_EXTERNAL,
 };
 
 enum sc_lock_video_orientation {
@@ -117,13 +130,19 @@ struct scrcpy_options {
     const char *audio_codec_options;
     const char *video_encoder;
     const char *audio_encoder;
+    const char *camera_id;
+    const char *camera_size;
+    const char *camera_ar;
+    uint16_t camera_fps;
     enum sc_log_level log_level;
     enum sc_codec video_codec;
     enum sc_codec audio_codec;
+    enum sc_video_source video_source;
     enum sc_audio_source audio_source;
     enum sc_record_format record_format;
     enum sc_keyboard_input_mode keyboard_input_mode;
     enum sc_mouse_input_mode mouse_input_mode;
+    enum sc_camera_facing camera_facing;
     struct sc_port_range port_range;
     uint32_t tunnel_host;
     uint16_t tunnel_port;
@@ -179,9 +198,13 @@ struct scrcpy_options {
     bool video;
     bool audio;
     bool require_audio;
-    bool list_encoders;
-    bool list_displays;
     bool kill_adb_on_close;
+    bool camera_high_speed;
+#define SC_OPTION_LIST_ENCODERS 0x1
+#define SC_OPTION_LIST_DISPLAYS 0x2
+#define SC_OPTION_LIST_CAMERAS 0x4
+#define SC_OPTION_LIST_CAMERA_SIZES 0x8
+    uint8_t list;
 };
 
 extern const struct scrcpy_options scrcpy_options_default;

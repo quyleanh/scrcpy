@@ -1,5 +1,14 @@
 # Video
 
+## Source
+
+By default, scrcpy mirrors the device screen.
+
+It is possible to capture the device camera instead.
+
+See the dedicated [camera](camera.md) page.
+
+
 ## Size
 
 By default, scrcpy attempts to mirror at the Android device resolution.
@@ -143,7 +152,7 @@ If several displays are available on the Android device, it is possible to
 select the display to mirror:
 
 ```bash
-scrcpy --display=1
+scrcpy --display-id=1
 ```
 
 The list of display ids can be retrieved by:

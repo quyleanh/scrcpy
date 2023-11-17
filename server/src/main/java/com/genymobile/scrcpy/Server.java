@@ -87,7 +87,11 @@ public final class Server {
     }
 
     private static void scrcpy(Options options) throws IOException, ConfigurationException {
-        Ln.i("Device: [" + Build.MANUFACTURER + "] " + Build.BRAND + " " + Build.MODEL + " (Android " + Build.VERSION.RELEASE + ")");
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S && options.getVideoSource() == VideoSource.CAMERA) {
+            Ln.e("Camera mirroring is not supported before Android 12");
+            throw new ConfigurationException("Camera mirroring is not supported");
+        }
+
         final Device device = new Device(options);
 
         Thread initThread = startInitThread(options);
@@ -98,8 +102,9 @@ public final class Server {
         boolean video = options.getVideo();
         boolean audio = options.getAudio();
         boolean sendDummyByte = options.getSendDummyByte();
+        boolean camera = options.getVideoSource() == VideoSource.CAMERA;
 
-        Workarounds.apply(audio);
+        Workarounds.apply(audio, camera);
 
         List<AsyncProcessor> asyncProcessors = new ArrayList<>();
 
@@ -132,9 +137,16 @@ public final class Server {
             if (video) {
                 Streamer videoStreamer = new Streamer(connection.getVideoFd(), options.getVideoCodec(), options.getSendCodecMeta(),
                         options.getSendFrameMeta());
-                ScreenEncoder screenEncoder = new ScreenEncoder(device, videoStreamer, options.getVideoBitRate(), options.getMaxFps(),
+                SurfaceCapture surfaceCapture;
+                if (options.getVideoSource() == VideoSource.DISPLAY) {
+                    surfaceCapture = new ScreenCapture(device);
+                } else {
+                    surfaceCapture = new CameraCapture(options.getCameraId(), options.getCameraFacing(), options.getCameraSize(),
+                            options.getMaxSize(), options.getCameraAspectRatio(), options.getCameraFps(), options.getCameraHighSpeed());
+                }
+                SurfaceEncoder surfaceEncoder = new SurfaceEncoder(surfaceCapture, videoStreamer, options.getVideoBitRate(), options.getMaxFps(),
                         options.getVideoCodecOptions(), options.getVideoEncoder(), options.getDownsizeOnError());
-                asyncProcessors.add(screenEncoder);
+                asyncProcessors.add(surfaceEncoder);
             }
 
             Completion completion = new Completion(asyncProcessors.size());
@@ -150,6 +162,8 @@ public final class Server {
             for (AsyncProcessor asyncProcessor : asyncProcessors) {
                 asyncProcessor.stop();
             }
+
+            connection.shutdown();
 
             try {
                 initThread.join();
@@ -170,16 +184,34 @@ public final class Server {
         return thread;
     }
 
-    public static void main(String... args) throws Exception {
+    public static void main(String... args) {
+        int status = 0;
+        try {
+            internalMain(args);
+        } catch (Throwable t) {
+            Ln.e(t.getMessage(), t);
+            status = 1;
+        } finally {
+            // By default, the Java process exits when all non-daemon threads are terminated.
+            // The Android SDK might start some non-daemon threads internally, preventing the scrcpy server to exit.
+            // So force the process to exit explicitly.
+            System.exit(status);
+        }
+    }
+
+    private static void internalMain(String... args) throws Exception {
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
             Ln.e("Exception on thread " + t, e);
         });
 
         Options options = Options.parse(args);
 
+        Ln.disableSystemStreams();
         Ln.initLogLevel(options.getLogLevel());
 
-        if (options.getListEncoders() || options.getListDisplays()) {
+        Ln.i("Device: [" + Build.MANUFACTURER + "] " + Build.BRAND + " " + Build.MODEL + " (Android " + Build.VERSION.RELEASE + ")");
+
+        if (options.getList()) {
             if (options.getCleanup()) {
                 CleanUp.unlinkSelf();
             }
@@ -190,6 +222,10 @@ public final class Server {
             }
             if (options.getListDisplays()) {
                 Ln.i(LogUtils.buildDisplayListMessage());
+            }
+            if (options.getListCameras() || options.getListCameraSizes()) {
+                Workarounds.apply(false, true);
+                Ln.i(LogUtils.buildCameraListMessage(options.getListCameraSizes()));
             }
             // Just print the requested data, do not mirror
             return;

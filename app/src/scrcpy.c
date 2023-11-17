@@ -90,7 +90,7 @@ push_event(uint32_t type, const char *name) {
 #define PUSH_EVENT(TYPE) push_event(TYPE, # TYPE)
 
 #ifdef _WIN32
-BOOL WINAPI windows_ctrl_handler(DWORD ctrl_type) {
+static BOOL WINAPI windows_ctrl_handler(DWORD ctrl_type) {
     if (ctrl_type == CTRL_C_EVENT) {
         PUSH_EVENT(SDL_QUIT);
         return TRUE;
@@ -252,7 +252,9 @@ sc_audio_demuxer_on_ended(struct sc_demuxer *demuxer,
 
     // Contrary to the video demuxer, keep mirroring if only the audio fails
     // (unless --require-audio is set).
-    if (status == SC_DEMUXER_STATUS_ERROR
+    if (status == SC_DEMUXER_STATUS_EOS) {
+        PUSH_EVENT(SC_EVENT_DEVICE_DISCONNECTED);
+    } else if (status == SC_DEMUXER_STATUS_ERROR
             || (status == SC_DEMUXER_STATUS_DISABLED
                 && options->require_audio)) {
         PUSH_EVENT(SC_EVENT_DEMUXER_ERROR);
@@ -295,7 +297,7 @@ sc_timeout_on_timeout(struct sc_timeout *timeout, void *userdata) {
 
 // Generate a scrcpy id to differentiate multiple running scrcpy instances
 static uint32_t
-scrcpy_generate_scid() {
+scrcpy_generate_scid(void) {
     struct sc_rand rand;
     sc_rand_init(&rand);
     // Only use 31 bits to avoid issues with signed values on the Java-side
@@ -349,7 +351,9 @@ scrcpy(struct scrcpy_options *options) {
         .log_level = options->log_level,
         .video_codec = options->video_codec,
         .audio_codec = options->audio_codec,
+        .video_source = options->video_source,
         .audio_source = options->audio_source,
+        .camera_facing = options->camera_facing,
         .crop = options->crop,
         .port_range = options->port_range,
         .tunnel_host = options->tunnel_host,
@@ -369,6 +373,10 @@ scrcpy(struct scrcpy_options *options) {
         .audio_codec_options = options->audio_codec_options,
         .video_encoder = options->video_encoder,
         .audio_encoder = options->audio_encoder,
+        .camera_id = options->camera_id,
+        .camera_size = options->camera_size,
+        .camera_ar = options->camera_ar,
+        .camera_fps = options->camera_fps,
         .force_adb_forward = options->force_adb_forward,
         .power_off_on_close = options->power_off_on_close,
         .clipboard_autosync = options->clipboard_autosync,
@@ -377,9 +385,9 @@ scrcpy(struct scrcpy_options *options) {
         .tcpip_dst = options->tcpip_dst,
         .cleanup = options->cleanup,
         .power_on = options->power_on,
-        .list_encoders = options->list_encoders,
-        .list_displays = options->list_displays,
         .kill_adb_on_close = options->kill_adb_on_close,
+        .camera_high_speed = options->camera_high_speed,
+        .list = options->list,
     };
 
     static const struct sc_server_callbacks cbs = {
@@ -397,7 +405,7 @@ scrcpy(struct scrcpy_options *options) {
 
     server_started = true;
 
-    if (options->list_encoders || options->list_displays) {
+    if (options->list) {
         bool ok = await_for_server(NULL);
         ret = ok ? SCRCPY_EXIT_SUCCESS : SCRCPY_EXIT_FAILURE;
         goto end;
@@ -448,9 +456,7 @@ scrcpy(struct scrcpy_options *options) {
 
     struct sc_file_pusher *fp = NULL;
 
-    // control implies video playback
-    assert(!options->control || options->video_playback);
-    if (options->control) {
+    if (options->video_playback && options->control) {
         if (!sc_file_pusher_init(&s->file_pusher, serial,
                                  options->push_target)) {
             goto end;

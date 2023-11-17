@@ -14,6 +14,7 @@ public class Options {
     private int maxSize;
     private VideoCodec videoCodec = VideoCodec.H264;
     private AudioCodec audioCodec = AudioCodec.OPUS;
+    private VideoSource videoSource = VideoSource.DISPLAY;
     private AudioSource audioSource = AudioSource.OUTPUT;
     private int videoBitRate = 8000000;
     private int audioBitRate = 128000;
@@ -23,6 +24,12 @@ public class Options {
     private Rect crop;
     private boolean control = true;
     private int displayId;
+    private String cameraId;
+    private Size cameraSize;
+    private CameraFacing cameraFacing;
+    private CameraAspectRatio cameraAspectRatio;
+    private int cameraFps;
+    private boolean cameraHighSpeed;
     private boolean showTouches;
     private boolean stayAwake;
     private List<CodecOption> videoCodecOptions;
@@ -38,6 +45,8 @@ public class Options {
 
     private boolean listEncoders;
     private boolean listDisplays;
+    private boolean listCameras;
+    private boolean listCameraSizes;
 
     // Options not used by the scrcpy client, but useful to use scrcpy-server directly
     private boolean sendDeviceMeta = true; // send device name and size
@@ -71,6 +80,10 @@ public class Options {
 
     public AudioCodec getAudioCodec() {
         return audioCodec;
+    }
+
+    public VideoSource getVideoSource() {
+        return videoSource;
     }
 
     public AudioSource getAudioSource() {
@@ -107,6 +120,30 @@ public class Options {
 
     public int getDisplayId() {
         return displayId;
+    }
+
+    public String getCameraId() {
+        return cameraId;
+    }
+
+    public Size getCameraSize() {
+        return cameraSize;
+    }
+
+    public CameraFacing getCameraFacing() {
+        return cameraFacing;
+    }
+
+    public CameraAspectRatio getCameraAspectRatio() {
+        return cameraAspectRatio;
+    }
+
+    public int getCameraFps() {
+        return cameraFps;
+    }
+
+    public boolean getCameraHighSpeed() {
+        return cameraHighSpeed;
     }
 
     public boolean getShowTouches() {
@@ -153,12 +190,24 @@ public class Options {
         return powerOn;
     }
 
+    public boolean getList() {
+        return listEncoders || listDisplays || listCameras || listCameraSizes;
+    }
+
     public boolean getListEncoders() {
         return listEncoders;
     }
 
     public boolean getListDisplays() {
         return listDisplays;
+    }
+
+    public boolean getListCameras() {
+        return listCameras;
+    }
+
+    public boolean getListCameraSizes() {
+        return listCameraSizes;
     }
 
     public boolean getSendDeviceMeta() {
@@ -230,6 +279,13 @@ public class Options {
                     }
                     options.audioCodec = audioCodec;
                     break;
+                case "video_source":
+                    VideoSource videoSource = VideoSource.findByName(value);
+                    if (videoSource == null) {
+                        throw new IllegalArgumentException("Video source " + value + " not supported");
+                    }
+                    options.videoSource = videoSource;
+                    break;
                 case "audio_source":
                     AudioSource audioSource = AudioSource.findByName(value);
                     if (audioSource == null) {
@@ -256,7 +312,9 @@ public class Options {
                     options.tunnelForward = Boolean.parseBoolean(value);
                     break;
                 case "crop":
-                    options.crop = parseCrop(value);
+                    if (!value.isEmpty()) {
+                        options.crop = parseCrop(value);
+                    }
                     break;
                 case "control":
                     options.control = Boolean.parseBoolean(value);
@@ -306,6 +364,42 @@ public class Options {
                 case "list_displays":
                     options.listDisplays = Boolean.parseBoolean(value);
                     break;
+                case "list_cameras":
+                    options.listCameras = Boolean.parseBoolean(value);
+                    break;
+                case "list_camera_sizes":
+                    options.listCameraSizes = Boolean.parseBoolean(value);
+                    break;
+                case "camera_id":
+                    if (!value.isEmpty()) {
+                        options.cameraId = value;
+                    }
+                    break;
+                case "camera_size":
+                    if (!value.isEmpty()) {
+                        options.cameraSize = parseSize(value);
+                    }
+                    break;
+                case "camera_facing":
+                    if (!value.isEmpty()) {
+                        CameraFacing facing = CameraFacing.findByName(value);
+                        if (facing == null) {
+                            throw new IllegalArgumentException("Camera facing " + value + " not supported");
+                        }
+                        options.cameraFacing = facing;
+                    }
+                    break;
+                case "camera_ar":
+                    if (!value.isEmpty()) {
+                        options.cameraAspectRatio = parseCameraAspectRatio(value);
+                    }
+                    break;
+                case "camera_fps":
+                    options.cameraFps = Integer.parseInt(value);
+                    break;
+                case "camera_high_speed":
+                    options.cameraHighSpeed = Boolean.parseBoolean(value);
+                    break;
                 case "send_device_meta":
                     options.sendDeviceMeta = Boolean.parseBoolean(value);
                     break;
@@ -337,9 +431,6 @@ public class Options {
     }
 
     private static Rect parseCrop(String crop) {
-        if (crop.isEmpty()) {
-            return null;
-        }
         // input format: "width:height:x:y"
         String[] tokens = crop.split(":");
         if (tokens.length != 4) {
@@ -350,5 +441,32 @@ public class Options {
         int x = Integer.parseInt(tokens[2]);
         int y = Integer.parseInt(tokens[3]);
         return new Rect(x, y, x + width, y + height);
+    }
+
+    private static Size parseSize(String size) {
+        // input format: "<width>x<height>"
+        String[] tokens = size.split("x");
+        if (tokens.length != 2) {
+            throw new IllegalArgumentException("Invalid size format (expected <width>x<height>): \"" + size + "\"");
+        }
+        int width = Integer.parseInt(tokens[0]);
+        int height = Integer.parseInt(tokens[1]);
+        return new Size(width, height);
+    }
+
+    private static CameraAspectRatio parseCameraAspectRatio(String ar) {
+        if ("sensor".equals(ar)) {
+            return CameraAspectRatio.sensorAspectRatio();
+        }
+
+        String[] tokens = ar.split(":");
+        if (tokens.length == 2) {
+            int w = Integer.parseInt(tokens[0]);
+            int h = Integer.parseInt(tokens[1]);
+            return CameraAspectRatio.fromFraction(w, h);
+        }
+
+        float floatAr = Float.parseFloat(tokens[0]);
+        return CameraAspectRatio.fromFloat(floatAr);
     }
 }
