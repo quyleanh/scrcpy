@@ -417,10 +417,14 @@ scrcpy(struct scrcpy_options *options) {
 
     if (options->video_playback) {
         sdl_set_hints(options->render_driver);
-        if (SDL_Init(SDL_INIT_VIDEO)) {
-            LOGE("Could not initialize SDL video: %s", SDL_GetError());
-            goto end;
-        }
+    }
+
+    // Initialize the video subsystem even if --no-video or --no-video-playback
+    // is passed so that clipboard synchronization still works.
+    // <https://github.com/Genymobile/scrcpy/issues/4418>
+    if (SDL_Init(SDL_INIT_VIDEO)) {
+        LOGE("Could not initialize SDL video: %s", SDL_GetError());
+        goto end;
     }
 
     if (options->audio_playback) {
@@ -503,7 +507,8 @@ scrcpy(struct scrcpy_options *options) {
         };
         if (!sc_recorder_init(&s->recorder, options->record_filename,
                               options->record_format, options->video,
-                              options->audio, &recorder_cbs, NULL)) {
+                              options->audio, options->record_orientation,
+                              &recorder_cbs, NULL)) {
             goto end;
         }
         recorder_initialized = true;
@@ -687,7 +692,7 @@ aoa_hid_end:
             .window_width = options->window_width,
             .window_height = options->window_height,
             .window_borderless = options->window_borderless,
-            .rotation = options->rotation,
+            .orientation = options->display_orientation,
             .mipmaps = options->mipmaps,
             .fullscreen = options->fullscreen,
             .start_fps_counter = options->start_fps_counter,
