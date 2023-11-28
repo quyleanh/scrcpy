@@ -76,6 +76,8 @@ sc_server_params_destroy(struct sc_server_params *params) {
     free((char *) params->video_encoder);
     free((char *) params->audio_encoder);
     free((char *) params->tcpip_dst);
+    free((char *) params->camera_id);
+    free((char *) params->camera_ar);
 }
 
 static bool
@@ -86,14 +88,15 @@ sc_server_params_copy(struct sc_server_params *dst,
     // The params reference user-allocated memory, so we must copy them to
     // handle them from another thread
 
-#define COPY(FIELD) \
+#define COPY(FIELD) do { \
     dst->FIELD = NULL; \
     if (src->FIELD) { \
         dst->FIELD = strdup(src->FIELD); \
         if (!dst->FIELD) { \
             goto error; \
         } \
-    }
+    } \
+} while(0)
 
     COPY(req_serial);
     COPY(crop);
@@ -102,6 +105,8 @@ sc_server_params_copy(struct sc_server_params *dst,
     COPY(video_encoder);
     COPY(audio_encoder);
     COPY(tcpip_dst);
+    COPY(camera_id);
+    COPY(camera_ar);
 #undef COPY
 
     return true;
@@ -173,8 +178,24 @@ sc_server_get_codec_name(enum sc_codec codec) {
             return "opus";
         case SC_CODEC_AAC:
             return "aac";
+        case SC_CODEC_FLAC:
+            return "flac";
         case SC_CODEC_RAW:
             return "raw";
+        default:
+            return NULL;
+    }
+}
+
+static const char *
+sc_server_get_camera_facing_name(enum sc_camera_facing camera_facing) {
+    switch (camera_facing) {
+        case SC_CAMERA_FACING_FRONT:
+            return "front";
+        case SC_CAMERA_FACING_BACK:
+            return "back";
+        case SC_CAMERA_FACING_EXTERNAL:
+            return "external";
         default:
             return NULL;
     }
@@ -215,13 +236,13 @@ execute_server(struct sc_server *server,
     cmd[count++] = SCRCPY_VERSION;
 
     unsigned dyn_idx = count; // from there, the strings are allocated
-#define ADD_PARAM(fmt, ...) { \
+#define ADD_PARAM(fmt, ...) do { \
         char *p; \
         if (asprintf(&p, fmt, ## __VA_ARGS__) == -1) { \
             goto end; \
         } \
         cmd[count++] = p; \
-    }
+    } while(0)
 
     ADD_PARAM("scid=%08x", params->scid);
     ADD_PARAM("log_level=%s", log_level_to_server_string(params->log_level));
@@ -246,8 +267,11 @@ execute_server(struct sc_server *server,
         ADD_PARAM("audio_codec=%s",
             sc_server_get_codec_name(params->audio_codec));
     }
-    if (params->audio_source != SC_AUDIO_SOURCE_OUTPUT) {
-        assert(params->audio_source == SC_AUDIO_SOURCE_MIC);
+    if (params->video_source != SC_VIDEO_SOURCE_DISPLAY) {
+        assert(params->video_source == SC_VIDEO_SOURCE_CAMERA);
+        ADD_PARAM("video_source=camera");
+    }
+    if (params->audio_source == SC_AUDIO_SOURCE_MIC) {
         ADD_PARAM("audio_source=mic");
     }
     if (params->max_size) {
@@ -272,6 +296,25 @@ execute_server(struct sc_server *server,
     }
     if (params->display_id) {
         ADD_PARAM("display_id=%" PRIu32, params->display_id);
+    }
+    if (params->camera_id) {
+        ADD_PARAM("camera_id=%s", params->camera_id);
+    }
+    if (params->camera_size) {
+        ADD_PARAM("camera_size=%s", params->camera_size);
+    }
+    if (params->camera_facing != SC_CAMERA_FACING_ANY) {
+        ADD_PARAM("camera_facing=%s",
+            sc_server_get_camera_facing_name(params->camera_facing));
+    }
+    if (params->camera_ar) {
+        ADD_PARAM("camera_ar=%s", params->camera_ar);
+    }
+    if (params->camera_fps) {
+        ADD_PARAM("camera_fps=%" PRIu16, params->camera_fps);
+    }
+    if (params->camera_high_speed) {
+        ADD_PARAM("camera_high_speed=true");
     }
     if (params->show_touches) {
         ADD_PARAM("show_touches=true");
@@ -310,11 +353,17 @@ execute_server(struct sc_server *server,
         // By default, power_on is true
         ADD_PARAM("power_on=false");
     }
-    if (params->list_encoders) {
+    if (params->list & SC_OPTION_LIST_ENCODERS) {
         ADD_PARAM("list_encoders=true");
     }
-    if (params->list_displays) {
+    if (params->list & SC_OPTION_LIST_DISPLAYS) {
         ADD_PARAM("list_displays=true");
+    }
+    if (params->list & SC_OPTION_LIST_CAMERAS) {
+        ADD_PARAM("list_cameras=true");
+    }
+    if (params->list & SC_OPTION_LIST_CAMERA_SIZES) {
+        ADD_PARAM("list_camera_sizes=true");
     }
 
 #undef ADD_PARAM
@@ -895,7 +944,7 @@ run_server(void *data) {
 
     // If --list-* is passed, then the server just prints the requested data
     // then exits.
-    if (params->list_encoders || params->list_displays) {
+    if (params->list) {
         sc_pid pid = execute_server(server, params);
         if (pid == SC_PROCESS_NONE) {
             goto error_connection_failed;

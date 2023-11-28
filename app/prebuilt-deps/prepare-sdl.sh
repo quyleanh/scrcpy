@@ -6,10 +6,11 @@ cd "$DIR"
 mkdir -p "$PREBUILT_DATA_DIR"
 cd "$PREBUILT_DATA_DIR"
 
-DEP_DIR=SDL2-2.28.0
+VERSION=2.28.5
+DEP_DIR="SDL2-$VERSION"
 
-FILENAME=SDL2-devel-2.28.0-mingw.tar.gz
-SHA256SUM=b91ce59eeacd4a9db403f976fd2337d9360b21ada374124417d716065c380e20
+FILENAME="SDL2-devel-$VERSION-mingw.tar.gz"
+SHA256SUM=3c0c655c2ebf67cad48fead72761d1601740ded30808952c3274ba223d226c21
 
 if [[ -d "$DEP_DIR" ]]
 then
@@ -17,7 +18,8 @@ then
     exit 0
 fi
 
-get_file "https://libsdl.org/release/$FILENAME" "$FILENAME" "$SHA256SUM"
+get_file "https://github.com/libsdl-org/SDL/releases/download/release-$VERSION/$FILENAME" \
+    "$FILENAME" "$SHA256SUM"
 
 mkdir "$DEP_DIR"
 cd "$DEP_DIR"
