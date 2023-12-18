@@ -419,12 +419,21 @@ scrcpy(struct scrcpy_options *options) {
         sdl_set_hints(options->render_driver);
     }
 
-    // Initialize the video subsystem even if --no-video or --no-video-playback
-    // is passed so that clipboard synchronization still works.
-    // <https://github.com/Genymobile/scrcpy/issues/4418>
-    if (SDL_Init(SDL_INIT_VIDEO)) {
-        LOGE("Could not initialize SDL video: %s", SDL_GetError());
-        goto end;
+    if (options->video_playback ||
+            (options->control && options->clipboard_autosync)) {
+        // Initialize the video subsystem even if --no-video or
+        // --no-video-playback is passed so that clipboard synchronization
+        // still works.
+        // <https://github.com/Genymobile/scrcpy/issues/4418>
+        if (SDL_Init(SDL_INIT_VIDEO)) {
+            // If it fails, it is an error only if video playback is enabled
+            if (options->video_playback) {
+                LOGE("Could not initialize SDL video: %s", SDL_GetError());
+                goto end;
+            } else {
+                LOGW("Could not initialize SDL video: %s", SDL_GetError());
+            }
+        }
     }
 
     if (options->audio_playback) {
